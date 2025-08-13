@@ -1,0 +1,36 @@
+services:
+  api-core:
+    build:
+      context: .
+    container_name: api-core
+    ports:
+      - "2000:8000" # port host:contain
+    volumes:
+      - ./storage:/app/storage:cached
+      - /var/www/template:/var/www/template
+    networks:
+      - caddy #ganti
+    working_dir: /app
+    restart: unless-stopped
+
+    command: >  
+      php artisan octane:frankenphp
+      --host=0.0.0.0  
+      --port=8000
+      --workers=8
+      --max-requests=1000
+  queue:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: laravel_queue
+    command: sh -c "composer install --no-dev && php artisan queue:work --tries=3 --sleep=3"
+    volumes:
+      - ./:/app
+    networks:
+      - caddy
+    restart: unless-stopped
+
+networks:
+  caddy:
+    external: true
