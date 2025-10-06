@@ -21,6 +21,8 @@ use App\Http\Controllers\API\V1\User\CRUD\DeleteUserController;
 use App\Http\Controllers\API\V1\User\CRUD\DetailUserController;
 use App\Http\Controllers\API\V1\User\CRUD\IndexUserController;
 use App\Http\Controllers\API\V1\User\CRUD\UpdateUserController;
+use App\Http\Controllers\API\V1\POS\Sale\CreateSaleController;
+use App\Http\Controllers\API\V1\POS\Sale\PostCogsController;
 use Illuminate\Support\Facades\Route;
 
 Route::post(uri: 'login', action: LoginController::class);
@@ -71,6 +73,11 @@ Route::prefix('permission')->middleware(['auth:api'])->group(function () {
     Route::get(uri: '/apps', action: IndexAppsListController::class);
 });
 
+// POS
+Route::prefix('pos')->middleware(['auth:api'])->group(function () {
+    Route::post(uri: 'sales', action: CreateSaleController::class);
+    Route::post(uri: 'sales/{sale}/post-cogs', action: PostCogsController::class);
+});
+
 Route::get(uri: 'subriptions', action:IndexSubsriptionController::class)->middleware(['auth:api']);
 Route::any(uri:'callback',action:CallbackController::class)->name('callback');
-

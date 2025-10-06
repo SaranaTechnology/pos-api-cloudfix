@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Docs\OpenApiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -16,3 +17,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 });
+
+Route::get('/docs', [OpenApiController::class, 'ui']);
+Route::get('/docs/openapi.{extension}', [OpenApiController::class, 'spec'])
+    ->where('extension', 'yaml|yml');

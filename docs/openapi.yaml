@@ -1,0 +1,200 @@
+openapi: 3.0.3
+info:
+  title: Cashier POS API
+  version: 1.1.0
+tags:
+  - name: POS
+    description: Endpoints untuk transaksi POS
+  - name: Accounting
+    description: Jurnal yang dibuat dari POS
+paths:
+  /api/v1/pos/sales:
+    post:
+      tags: [POS]
+      summary: Create POS sale
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSaleRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateSaleResponse'
+  /api/v1/pos/sales/{sale}/post-cogs:
+    post:
+      tags: [Accounting]
+      summary: Post COGS vs Inventory journal
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: sale
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostCogsRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JournalEntryResponse'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    ApiResponse:
+      type: object
+      properties:
+        success: { type: boolean }
+        message: { type: string }
+        code: { type: integer }
+        data: {}
+      required: [success, message, code]
+    CreateSaleRequest:
+      type: object
+      properties:
+        items:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/SaleItemCreate'
+        payment:
+          $ref: '#/components/schemas/PaymentCreate'
+        discount: { type: integer, minimum: 0 }
+        tax: { type: integer, minimum: 0 }
+        invoice_no: { type: string }
+        sold_at: { type: string, format: date-time }
+        customer_id: { type: integer, nullable: true }
+      required: [items, payment]
+    SaleItemCreate:
+      type: object
+      properties:
+        product_id: { type: integer }
+        qty: { type: number, minimum: 0.01 }
+        price: { type: integer, minimum: 0 }
+      required: [product_id, qty, price]
+    PaymentCreate:
+      type: object
+      properties:
+        method: { type: string, example: cash }
+        amount: { type: integer, minimum: 0 }
+        reference: { type: string, nullable: true }
+      required: [method]
+    CreateSaleResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/Sale'
+    Sale:
+      type: object
+      properties:
+        id: { type: integer }
+        invoice_no: { type: string }
+        customer_id: { type: integer, nullable: true }
+        sold_at: { type: string, format: date-time }
+        subtotal: { type: integer }
+        discount: { type: integer }
+        tax: { type: integer }
+        total: { type: integer }
+        status: { type: string }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/SaleItem' }
+        payments:
+          type: array
+          items: { $ref: '#/components/schemas/Payment' }
+    SaleItem:
+      type: object
+      properties:
+        id: { type: integer }
+        pos_sale_id: { type: integer }
+        product_id: { type: integer }
+        qty: { type: number }
+        price: { type: integer }
+        line_total: { type: integer }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    Payment:
+      type: object
+      properties:
+        id: { type: integer }
+        pos_sale_id: { type: integer }
+        method: { type: string }
+        amount: { type: integer }
+        reference: { type: string, nullable: true }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    PostCogsRequest:
+      type: object
+      properties:
+        items_cost:
+          description: Biaya per item (bisa array objek atau map {product_id: cost}).
+          oneOf:
+            - type: array
+              items:
+                type: object
+                required: [product_id, cost]
+                properties:
+                  product_id: { type: integer }
+                  cost: { type: integer }
+            - type: object
+              additionalProperties: { type: integer }
+      required: [items_cost]
+    JournalEntryResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            data: { $ref: '#/components/schemas/JournalEntry' }
+    JournalEntry:
+      type: object
+      properties:
+        id: { type: integer }
+        date: { type: string, format: date }
+        reference: { type: string }
+        memo: { type: string }
+        source: { type: string }
+        status: { type: string, enum: [Draft, Posted, Voided, Reversed] }
+        posted_at: { type: string, format: date-time, nullable: true }
+        voided_at: { type: string, format: date-time, nullable: true }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+        lines:
+          type: array
+          items: { $ref: '#/components/schemas/JournalLine' }
+    JournalLine:
+      type: object
+      properties:
+        id: { type: integer }
+        journal_entry_id: { type: integer }
+        chart_of_account_id: { type: integer }
+        debit: { type: integer }
+        credit: { type: integer }
+        memo: { type: string }
+        department: { type: string, nullable: true }
+        project: { type: string, nullable: true }
+        external_reference_id: { type: string, nullable: true }
+        is_reconciled: { type: boolean }
+        reconciled_at: { type: string, format: date, nullable: true }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
