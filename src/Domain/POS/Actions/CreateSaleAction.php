@@ -5,6 +5,8 @@ namespace Domain\POS\Actions;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
+use Infra\POS\Models\Customer;
+use Infra\POS\Models\LoyaltyTransaction;
 use Infra\POS\Models\Payment;
 use Infra\POS\Models\Sale;
 use Infra\POS\Models\SaleItem;
@@ -110,7 +112,34 @@ class CreateSaleAction extends Action
             ]);
         }
 
-        return $sale->load('items', 'payments');
+        if ($sale->customer_id) {
+            $customer = Customer::find($sale->customer_id);
+            if ($customer) {
+                $customer->lifetime_value = (int) $customer->lifetime_value + $total;
+
+                $loyaltyData = Arr::get($data, 'loyalty', []);
+                $awardPoints = (int) Arr::get($loyaltyData, 'points', 0);
+                if ($awardPoints > 0) {
+                    $newBalance = $customer->loyalty_points + $awardPoints;
+                    LoyaltyTransaction::create([
+                        'customer_id' => $customer->id,
+                        'sale_id' => $sale->id,
+                        'type' => 'earn',
+                        'points' => $awardPoints,
+                        'balance_after' => $newBalance,
+                        'description' => Arr::get(
+                            $loyaltyData,
+                            'description',
+                            'Poin dari transaksi POS '.$sale->invoice_no
+                        ),
+                    ]);
+                    $customer->loyalty_points = $newBalance;
+                }
+
+                $customer->save();
+            }
+        }
+
+        return $sale->load('items', 'payments', 'customer');
     }
 }
-

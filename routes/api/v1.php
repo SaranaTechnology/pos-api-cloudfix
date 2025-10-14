@@ -21,6 +21,23 @@ use App\Http\Controllers\API\V1\User\CRUD\DeleteUserController;
 use App\Http\Controllers\API\V1\User\CRUD\DetailUserController;
 use App\Http\Controllers\API\V1\User\CRUD\IndexUserController;
 use App\Http\Controllers\API\V1\User\CRUD\UpdateUserController;
+use App\Http\Controllers\API\V1\POS\Combo\CreateComboController;
+use App\Http\Controllers\API\V1\POS\Combo\DeleteComboController;
+use App\Http\Controllers\API\V1\POS\Combo\IndexComboController;
+use App\Http\Controllers\API\V1\POS\Combo\ShowComboController;
+use App\Http\Controllers\API\V1\POS\Combo\UpdateComboController;
+use App\Http\Controllers\API\V1\POS\Customer\AdjustCustomerPointsController;
+use App\Http\Controllers\API\V1\POS\Customer\CreateCustomerController;
+use App\Http\Controllers\API\V1\POS\Customer\DeleteCustomerController;
+use App\Http\Controllers\API\V1\POS\Customer\IndexCustomerController;
+use App\Http\Controllers\API\V1\POS\Customer\ListCustomerTransactionsController;
+use App\Http\Controllers\API\V1\POS\Customer\ShowCustomerController;
+use App\Http\Controllers\API\V1\POS\Customer\UpdateCustomerController;
+use App\Http\Controllers\API\V1\POS\Menu\CreateMenuController;
+use App\Http\Controllers\API\V1\POS\Menu\DeleteMenuController;
+use App\Http\Controllers\API\V1\POS\Menu\IndexMenuController;
+use App\Http\Controllers\API\V1\POS\Menu\ShowMenuController;
+use App\Http\Controllers\API\V1\POS\Menu\UpdateMenuController;
 use App\Http\Controllers\API\V1\POS\Sale\CreateSaleController;
 use App\Http\Controllers\API\V1\POS\Sale\PostCogsController;
 use Illuminate\Support\Facades\Route;
@@ -77,6 +94,35 @@ Route::prefix('permission')->middleware(['auth:api'])->group(function () {
 Route::prefix('pos')->middleware(['auth:api'])->group(function () {
     Route::post(uri: 'sales', action: CreateSaleController::class);
     Route::post(uri: 'sales/{sale}/post-cogs', action: PostCogsController::class);
+
+    Route::prefix('menu')->group(function () {
+        Route::get(uri: '', action: IndexMenuController::class);
+        Route::post(uri: '', action: CreateMenuController::class);
+        Route::get(uri: '{menuItem}', action: ShowMenuController::class);
+        Route::put(uri: '{menuItem}', action: UpdateMenuController::class);
+        Route::patch(uri: '{menuItem}', action: UpdateMenuController::class);
+        Route::delete(uri: '{menuItem}', action: DeleteMenuController::class);
+    });
+
+    Route::prefix('combos')->group(function () {
+        Route::get(uri: '', action: IndexComboController::class);
+        Route::post(uri: '', action: CreateComboController::class);
+        Route::get(uri: '{combo}', action: ShowComboController::class);
+        Route::put(uri: '{combo}', action: UpdateComboController::class);
+        Route::patch(uri: '{combo}', action: UpdateComboController::class);
+        Route::delete(uri: '{combo}', action: DeleteComboController::class);
+    });
+
+    Route::prefix('customers')->group(function () {
+        Route::get(uri: '', action: IndexCustomerController::class);
+        Route::post(uri: '', action: CreateCustomerController::class);
+        Route::get(uri: '{customer}', action: ShowCustomerController::class);
+        Route::put(uri: '{customer}', action: UpdateCustomerController::class);
+        Route::patch(uri: '{customer}', action: UpdateCustomerController::class);
+        Route::delete(uri: '{customer}', action: DeleteCustomerController::class);
+        Route::get(uri: '{customer}/loyalty', action: ListCustomerTransactionsController::class);
+        Route::post(uri: '{customer}/loyalty', action: AdjustCustomerPointsController::class);
+    });
 });
 
 Route::get(uri: 'subriptions', action:IndexSubsriptionController::class)->middleware(['auth:api']);

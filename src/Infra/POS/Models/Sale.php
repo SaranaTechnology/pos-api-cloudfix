@@ -6,7 +6,6 @@ use Infra\Shared\Models\BaseModel;
 
 class Sale extends BaseModel
 {
-    protected $table = 'pos_sales';
 
     public function items()
     {
@@ -17,5 +16,9 @@ class Sale extends BaseModel
     {
         return $this->hasMany(Payment::class, 'pos_sale_id');
     }
-}
 
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class, 'customer_id');
+    }
+}

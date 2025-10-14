@@ -6,7 +6,6 @@ use Infra\Shared\Models\BaseModel;
 
 class JournalLine extends BaseModel
 {
-    protected $table = 'journal_lines';
 
     public function entry()
     {
