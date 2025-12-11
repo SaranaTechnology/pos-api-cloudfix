@@ -1,35 +1,46 @@
 services:
-  api-core:
+  api-cashier-pos:
     build:
       context: .
-    container_name: api-core
+      dockerfile: Dockerfile
+    container_name: api-cashier-pos
     ports:
-      - "2000:8000" # port host:contain
+      - "2001:8000"
+    environment:
+      - APP_ENV=production
+      - OCTANE_WORKERS=8
+      - OCTANE_MAX_REQUESTS=1000
+    env_file:
+      - .env.likely
     volumes:
       - ./storage:/app/storage:cached
       - /var/www/template:/var/www/template
     networks:
-      - caddy #ganti
+      - caddy
     working_dir: /app
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
 
-    command: >  
-      php artisan octane:frankenphp
-      --host=0.0.0.0  
-      --port=8000
-      --workers=8
-      --max-requests=1000
   queue:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: laravel_queue
-    command: sh -c "composer install --no-dev && php artisan queue:work --tries=3 --sleep=3"
+    container_name: cashier_pos_queue
+    command: ["php", "artisan", "queue:work", "--tries=3", "--sleep=3"]
+    env_file:
+      - .env.likely
     volumes:
-      - ./:/app
+      - ./storage:/app/storage:cached
     networks:
       - caddy
     restart: unless-stopped
+    depends_on:
+      - api-cashier-pos
 
 networks:
   caddy:
