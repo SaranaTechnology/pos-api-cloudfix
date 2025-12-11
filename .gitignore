@@ -21,3 +21,10 @@ yarn-error.log
 **/caddy
 frankenphp
 frankenphp-worker.php
+
+# Client-specific environment files
+.env.*
+!.env.example
+
+# macOS
+.DS_Store
