@@ -1,19 +1,17 @@
 <?php
 
-use Database\Seeders\permission;
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
     /**
      * Run the migrations.
+     *
+     * @deprecated Permission seeding moved to 2025_03_01_000009_seed_pos_permissions.php
      */
     public function up(): void
     {
-        $permission=new permission();
-        $permission->run();
+        // Permission seeding has been moved to dedicated migration
     }
 
     /**

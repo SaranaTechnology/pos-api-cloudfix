@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\API\V1\Health\HealthController;
 use App\Http\Controllers\API\V1\Permission\Apps\IndexAppsListController;
 use App\Http\Controllers\API\V1\Permission\CRUD\IndexPermissionController;
 use App\Http\Controllers\API\V1\Roles\CRUD\CreateRoleController;
@@ -39,8 +40,23 @@ use App\Http\Controllers\API\V1\POS\Menu\IndexMenuController;
 use App\Http\Controllers\API\V1\POS\Menu\ShowMenuController;
 use App\Http\Controllers\API\V1\POS\Menu\UpdateMenuController;
 use App\Http\Controllers\API\V1\POS\Sale\CreateSaleController;
+use App\Http\Controllers\API\V1\POS\Sale\IndexSaleController;
+use App\Http\Controllers\API\V1\POS\Sale\ShowSaleController;
+use App\Http\Controllers\API\V1\POS\Sale\CancelSaleController;
 use App\Http\Controllers\API\V1\POS\Sale\PostCogsController;
 use Illuminate\Support\Facades\Route;
+
+/*
+|--------------------------------------------------------------------------
+| Health Check Routes (No Authentication Required)
+|--------------------------------------------------------------------------
+*/
+Route::prefix('health')->group(function () {
+    Route::get('/', [HealthController::class, 'check'])->name('health.check');
+    Route::get('/live', [HealthController::class, 'liveness'])->name('health.liveness');
+    Route::get('/ready', [HealthController::class, 'readiness'])->name('health.readiness');
+    Route::get('/detailed', [HealthController::class, 'detailed'])->name('health.detailed');
+});
 
 Route::post(uri: 'login', action: LoginController::class);
 
@@ -92,8 +108,14 @@ Route::prefix('permission')->middleware(['auth:api'])->group(function () {
 
 // POS
 Route::prefix('pos')->middleware(['auth:api'])->group(function () {
-    Route::post(uri: 'sales', action: CreateSaleController::class);
-    Route::post(uri: 'sales/{sale}/post-cogs', action: PostCogsController::class);
+    // Sales
+    Route::prefix('sales')->group(function () {
+        Route::get(uri: '', action: IndexSaleController::class);
+        Route::post(uri: '', action: CreateSaleController::class);
+        Route::get(uri: '{sale}', action: ShowSaleController::class);
+        Route::post(uri: '{sale}/cancel', action: CancelSaleController::class);
+        Route::post(uri: '{sale}/post-cogs', action: PostCogsController::class);
+    });
 
     Route::prefix('menu')->group(function () {
         Route::get(uri: '', action: IndexMenuController::class);
@@ -127,3 +149,11 @@ Route::prefix('pos')->middleware(['auth:api'])->group(function () {
 
 Route::get(uri: 'subriptions', action:IndexSubsriptionController::class)->middleware(['auth:api']);
 Route::any(uri:'callback',action:CallbackController::class)->name('callback');
+
+// Public Self-Order API (tanpa auth)
+Route::prefix('public/self-order')->group(function () {
+    Route::get('menu', \App\Http\Controllers\API\V1\Public\SelfOrder\ListMenuController::class);
+    Route::get('combos', \App\Http\Controllers\API\V1\Public\SelfOrder\ListCombosController::class);
+    Route::post('order', \App\Http\Controllers\API\V1\Public\SelfOrder\CreateOrderController::class);
+    Route::get('order/{orderNo}/status', \App\Http\Controllers\API\V1\Public\SelfOrder\ShowOrderStatusController::class);
+});

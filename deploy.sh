@@ -55,9 +55,17 @@ parse_arguments() {
                 CLIENT_NAME="$2"
                 shift 2
                 ;;
+            --client=*)
+                CLIENT_NAME="${1#*=}"
+                shift
+                ;;
             --env|-e)
                 ENVIRONMENT="$2"
                 shift 2
+                ;;
+            --env=*)
+                ENVIRONMENT="${1#*=}"
+                shift
                 ;;
             --help)
                 show_help
@@ -211,17 +219,17 @@ build_image() {
     log_info "Building Docker image..."
 
     TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-    # New tag format: dev.{client}-latest, dev.{client}.{timestamp}
-    IMAGE_TAG_LATEST="${ENV_PREFIX}.${CLIENT_NAME}-latest"
-    IMAGE_TAG_VERSIONED="${ENV_PREFIX}.${CLIENT_NAME}.${TIMESTAMP}"
+    TAG_LATEST="${CLIENT_NAME}-latest"
+    TAG_VERSIONED="${CLIENT_NAME}-${TIMESTAMP}"
 
-    FULL_IMAGE_LATEST="${ECR_REGISTRY}/${REPOSITORY_NAME}:${IMAGE_TAG_LATEST}"
-    FULL_IMAGE_VERSIONED="${ECR_REGISTRY}/${REPOSITORY_NAME}:${IMAGE_TAG_VERSIONED}"
+    FULL_IMAGE_LATEST="${ECR_REGISTRY}/${REPOSITORY_NAME}:${TAG_LATEST}"
+    FULL_IMAGE_VERSIONED="${ECR_REGISTRY}/${REPOSITORY_NAME}:${TAG_VERSIONED}"
 
     log_info "Environment: $ENVIRONMENT"
+    log_info "Client: $CLIENT_NAME"
     log_info "Building with tags:"
-    log_info "  Latest:     $IMAGE_TAG_LATEST"
-    log_info "  Versioned:  $IMAGE_TAG_VERSIONED"
+    log_info "  Latest:     $TAG_LATEST"
+    log_info "  Versioned:  $TAG_VERSIONED"
 
     docker build \
         --platform linux/amd64 \
@@ -253,13 +261,13 @@ print_summary() {
     echo -e "${GREEN}╚═══════════════════════════════════════════════════════════╝${NC}"
     echo ""
     echo -e "${BLUE}Client:${NC}      $CLIENT_NAME"
-    echo -e "${BLUE}Environment:${NC} $ENV_PREFIX"
+    echo -e "${BLUE}Environment:${NC} $ENVIRONMENT"
     echo -e "${BLUE}Registry:${NC}    $ECR_REGISTRY"
     echo -e "${BLUE}Repository:${NC}  $REPOSITORY_NAME"
     echo ""
-    echo -e "${BLUE}Tag Format:${NC}"
-    echo -e "  ${GREEN}Latest:${NC}    $IMAGE_TAG_LATEST"
-    echo -e "  ${GREEN}Versioned:${NC} $IMAGE_TAG_VERSIONED"
+    echo -e "${BLUE}Tags:${NC}"
+    echo -e "  ${GREEN}Latest:${NC}    $TAG_LATEST"
+    echo -e "  ${GREEN}Versioned:${NC} $TAG_VERSIONED"
     echo ""
     echo -e "${BLUE}Images pushed:${NC}"
     echo "  - $FULL_IMAGE_LATEST"

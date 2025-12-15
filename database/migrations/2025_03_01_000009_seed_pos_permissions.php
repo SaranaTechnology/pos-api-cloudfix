@@ -1,16 +1,14 @@
 <?php
 
-namespace Database\Seeders;
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Support\Facades\DB;
 
-use Illuminate\Database\Seeder;
-use Infra\Roles\Models\Permissions\Permissions;
-
-class permission extends Seeder
+return new class extends Migration
 {
     /**
-     * Run the database seeds.
+     * Run the migrations.
      */
-    public function run(): void
+    public function up(): void
     {
         $permissions = [
             // Core permissions
@@ -59,11 +57,22 @@ class permission extends Seeder
             ['app' => 'pos', 'function' => 'export-sales-report'],
         ];
 
+        $now = now();
         foreach ($permissions as $permission) {
-            Permissions::updateOrCreate(
+            DB::table('permissions')->updateOrInsert(
                 ['app' => $permission['app'], 'function' => $permission['function']],
-                $permission
+                array_merge($permission, ['created_at' => $now, 'updated_at' => $now])
             );
         }
     }
-}
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        DB::table('permissions')
+            ->whereIn('app', ['pos'])
+            ->delete();
+    }
+};
