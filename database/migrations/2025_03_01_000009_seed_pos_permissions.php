@@ -11,26 +11,17 @@ return new class extends Migration
     public function up(): void
     {
         $permissions = [
-            // Core permissions
-            ['app' => 'core', 'function' => 'add-user'],
-            ['app' => 'core', 'function' => 'edit-user'],
-            ['app' => 'core', 'function' => 'view-user'],
-            ['app' => 'core', 'function' => 'delete-user'],
-            ['app' => 'core', 'function' => 'add-role'],
-            ['app' => 'core', 'function' => 'edit-role'],
-            ['app' => 'core', 'function' => 'change-role-permission'],
-            ['app' => 'core', 'function' => 'delete-role'],
-            ['app' => 'core', 'function' => 'set-user-role'],
-            ['app' => 'core', 'function' => 'view-apps'],
-            ['app' => 'core', 'function' => 'payment'],
-            ['app' => 'core', 'function' => 'view-role'],
-            ['app' => 'core', 'function' => 'view-permission'],
-
             // POS - Menu
             ['app' => 'pos', 'function' => 'view-menu'],
             ['app' => 'pos', 'function' => 'create-menu'],
             ['app' => 'pos', 'function' => 'update-menu'],
             ['app' => 'pos', 'function' => 'delete-menu'],
+
+            // POS - Category Menu
+            ['app' => 'pos', 'function' => 'view-category-menu'],
+            ['app' => 'pos', 'function' => 'create-category-menu'],
+            ['app' => 'pos', 'function' => 'update-category-menu'],
+            ['app' => 'pos', 'function' => 'delete-category-menu'],
 
             // POS - Combo
             ['app' => 'pos', 'function' => 'view-combo'],
@@ -45,16 +36,42 @@ return new class extends Migration
             ['app' => 'pos', 'function' => 'delete-customer'],
             ['app' => 'pos', 'function' => 'manage-loyalty'],
 
-            // POS - Sales
+            // POS - Table
+            ['app' => 'pos', 'function' => 'view-table'],
+            ['app' => 'pos', 'function' => 'create-table'],
+            ['app' => 'pos', 'function' => 'update-table'],
+            ['app' => 'pos', 'function' => 'delete-table'],
+
+            // POS - Sales/Transaction
             ['app' => 'pos', 'function' => 'view-sales'],
             ['app' => 'pos', 'function' => 'create-sales'],
+            ['app' => 'pos', 'function' => 'update-sales'],
             ['app' => 'pos', 'function' => 'cancel-sales'],
             ['app' => 'pos', 'function' => 'refund-sales'],
             ['app' => 'pos', 'function' => 'post-cogs'],
+            ['app' => 'pos', 'function' => 'apply-discount'],
+
+            // POS - Payment
+            ['app' => 'pos', 'function' => 'view-payment-method'],
+            ['app' => 'pos', 'function' => 'create-payment-method'],
+            ['app' => 'pos', 'function' => 'update-payment-method'],
+            ['app' => 'pos', 'function' => 'delete-payment-method'],
+
+            // POS - Shift/Cashier
+            ['app' => 'pos', 'function' => 'view-shift'],
+            ['app' => 'pos', 'function' => 'open-shift'],
+            ['app' => 'pos', 'function' => 'close-shift'],
+
+            // POS - Printer
+            ['app' => 'pos', 'function' => 'view-printer'],
+            ['app' => 'pos', 'function' => 'create-printer'],
+            ['app' => 'pos', 'function' => 'update-printer'],
+            ['app' => 'pos', 'function' => 'delete-printer'],
 
             // POS - Reports
             ['app' => 'pos', 'function' => 'view-sales-report'],
             ['app' => 'pos', 'function' => 'export-sales-report'],
+            ['app' => 'pos', 'function' => 'view-dashboard'],
         ];
 
         $now = now();
@@ -72,7 +89,7 @@ return new class extends Migration
     public function down(): void
     {
         DB::table('permissions')
-            ->whereIn('app', ['pos'])
+            ->where('app', 'pos')
             ->delete();
     }
 };
