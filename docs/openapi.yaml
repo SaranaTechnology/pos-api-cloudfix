@@ -1,16 +1,132 @@
 openapi: 3.0.3
 info:
-  title: Cashier POS API
-  version: 1.1.0
+  title: Sarana Cashier POS API
+  description: Point of Sale & Self-Order System - Laravel Octane + FrankenPHP
+  version: 2.0.0
+servers:
+  - url: http://localhost:8000/api/v1
+    description: Local development
 tags:
-  - name: POS
-    description: Endpoints untuk transaksi POS
-  - name: Accounting
-    description: Jurnal yang dibuat dari POS
+  - name: Health
+    description: Health check endpoints
+  - name: Auth
+    description: Authentication endpoints
+  - name: POS Sales
+    description: Point of Sale transactions
+  - name: Menu
+    description: Menu items management
+  - name: Categories
+    description: Menu categories management
+  - name: Combos
+    description: Combo/bundle management
+  - name: Customers
+    description: Customer & loyalty management
+  - name: Kitchen
+    description: Kitchen Display System
+  - name: Self-Order
+    description: Public self-order endpoints (no auth required)
+
 paths:
-  /api/v1/pos/sales:
+  # Health Check
+  /health:
+    get:
+      tags: [Health]
+      summary: Basic health check
+      responses:
+        '200':
+          description: Service is healthy
+
+  /health/live:
+    get:
+      tags: [Health]
+      summary: Liveness probe
+      responses:
+        '200':
+          description: Service is alive
+
+  /health/ready:
+    get:
+      tags: [Health]
+      summary: Readiness probe
+      responses:
+        '200':
+          description: Service is ready
+
+  # Authentication
+  /login:
     post:
-      tags: [POS]
+      tags: [Auth]
+      summary: Login user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email: { type: string, format: email }
+                password: { type: string }
+              required: [email, password]
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /auth:
+    get:
+      tags: [Auth]
+      summary: Get authenticated user data
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK
+    put:
+      tags: [Auth]
+      summary: Update profile
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: OK
+
+  # POS Sales
+  /pos/sales:
+    get:
+      tags: [POS Sales]
+      summary: List all sales
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: per_page
+          schema: { type: integer, default: 15 }
+        - in: query
+          name: status
+          schema: { type: string }
+        - in: query
+          name: from_date
+          schema: { type: string, format: date }
+        - in: query
+          name: to_date
+          schema: { type: string, format: date }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedResponse'
+    post:
+      tags: [POS Sales]
       summary: Create POS sale
       security:
         - bearerAuth: []
@@ -27,9 +143,40 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CreateSaleResponse'
-  /api/v1/pos/sales/{sale}/post-cogs:
+
+  /pos/sales/{sale}:
+    get:
+      tags: [POS Sales]
+      summary: Get sale details
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: sale
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: OK
+
+  /pos/sales/{sale}/cancel:
     post:
-      tags: [Accounting]
+      tags: [POS Sales]
+      summary: Cancel a sale
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: sale
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: OK
+
+  /pos/sales/{sale}/post-cogs:
+    post:
+      tags: [POS Sales]
       summary: Post COGS vs Inventory journal
       security:
         - bearerAuth: []
@@ -47,16 +194,572 @@ paths:
       responses:
         '200':
           description: OK
+
+  # Menu Items
+  /pos/menu:
+    get:
+      tags: [Menu]
+      summary: List all menu items
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: category_id
+          schema: { type: integer }
+        - in: query
+          name: search
+          schema: { type: string }
+        - in: query
+          name: per_page
+          schema: { type: integer }
+      responses:
+        '200':
+          description: OK
+    post:
+      tags: [Menu]
+      summary: Create menu item
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MenuItemRequest'
+      responses:
+        '201':
+          description: Created
+
+  /pos/menu/{menuItem}:
+    get:
+      tags: [Menu]
+      summary: Get menu item details
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: menuItem
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: OK
+    put:
+      tags: [Menu]
+      summary: Update menu item
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: menuItem
+          required: true
+          schema: { type: integer }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MenuItemRequest'
+      responses:
+        '200':
+          description: OK
+    delete:
+      tags: [Menu]
+      summary: Delete menu item
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: menuItem
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: OK
+
+  # Categories
+  /pos/categories:
+    get:
+      tags: [Categories]
+      summary: List all categories
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/JournalEntryResponse'
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Category'
+    post:
+      tags: [Categories]
+      summary: Create category
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryRequest'
+      responses:
+        '201':
+          description: Created
+
+  /pos/categories/{category}:
+    get:
+      tags: [Categories]
+      summary: Get category details
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: category
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: OK
+    put:
+      tags: [Categories]
+      summary: Update category
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: category
+          required: true
+          schema: { type: integer }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryRequest'
+      responses:
+        '200':
+          description: OK
+    delete:
+      tags: [Categories]
+      summary: Delete category
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: category
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: OK
+
+  # Combos
+  /pos/combos:
+    get:
+      tags: [Combos]
+      summary: List all combos
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK
+    post:
+      tags: [Combos]
+      summary: Create combo
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ComboRequest'
+      responses:
+        '201':
+          description: Created
+
+  /pos/combos/{combo}:
+    get:
+      tags: [Combos]
+      summary: Get combo details
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: combo
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: OK
+    put:
+      tags: [Combos]
+      summary: Update combo
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: combo
+          required: true
+          schema: { type: integer }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ComboRequest'
+      responses:
+        '200':
+          description: OK
+    delete:
+      tags: [Combos]
+      summary: Delete combo
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: combo
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: OK
+
+  # Customers
+  /pos/customers:
+    get:
+      tags: [Customers]
+      summary: List all customers
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK
+    post:
+      tags: [Customers]
+      summary: Create customer
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerRequest'
+      responses:
+        '201':
+          description: Created
+
+  /pos/customers/{customer}:
+    get:
+      tags: [Customers]
+      summary: Get customer details
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: customer
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: OK
+    put:
+      tags: [Customers]
+      summary: Update customer
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: customer
+          required: true
+          schema: { type: integer }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerRequest'
+      responses:
+        '200':
+          description: OK
+    delete:
+      tags: [Customers]
+      summary: Delete customer
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: customer
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: OK
+
+  /pos/customers/{customer}/loyalty:
+    get:
+      tags: [Customers]
+      summary: Get customer loyalty transactions
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: customer
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: OK
+    post:
+      tags: [Customers]
+      summary: Adjust customer loyalty points
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: customer
+          required: true
+          schema: { type: integer }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                points: { type: integer }
+                reason: { type: string }
+      responses:
+        '200':
+          description: OK
+
+  # Kitchen Display System
+  /kitchen/orders:
+    get:
+      tags: [Kitchen]
+      summary: List kitchen orders
+      description: Get orders for kitchen display, filtered by status
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [pending, confirmed, preparing, ready]
+          description: Filter by order status (comma-separated for multiple)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/KitchenOrder'
+
+  /kitchen/orders/{orderNo}/confirm:
+    post:
+      tags: [Kitchen]
+      summary: Confirm order
+      description: Move order from PENDING to CONFIRMED
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: orderNo
+          required: true
+          schema: { type: string }
+          example: SO241231ABC123
+      responses:
+        '200':
+          description: OK
+
+  /kitchen/orders/{orderNo}/preparing:
+    post:
+      tags: [Kitchen]
+      summary: Start preparing order
+      description: Move order from CONFIRMED to PREPARING
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: orderNo
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: OK
+
+  /kitchen/orders/{orderNo}/ready:
+    post:
+      tags: [Kitchen]
+      summary: Mark order ready
+      description: Move order from PREPARING to READY
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: orderNo
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: OK
+
+  /kitchen/orders/{orderNo}/complete:
+    post:
+      tags: [Kitchen]
+      summary: Complete order
+      description: Move order from READY to COMPLETED
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: orderNo
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: OK
+
+  /kitchen/orders/{orderNo}/cancel:
+    post:
+      tags: [Kitchen]
+      summary: Cancel order
+      description: Cancel order (can be done from any status except COMPLETED)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: orderNo
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: OK
+
+  # Public Self-Order (No Auth)
+  /public/self-order/categories:
+    get:
+      tags: [Self-Order]
+      summary: List categories for self-order
+      description: Public endpoint - no authentication required
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Category'
+
+  /public/self-order/menu:
+    get:
+      tags: [Self-Order]
+      summary: List menu for self-order
+      description: Public endpoint - no authentication required
+      parameters:
+        - in: query
+          name: category_id
+          schema: { type: integer }
+          description: Filter by category ID
+        - in: query
+          name: search
+          schema: { type: string }
+          description: Search by menu name
+        - in: query
+          name: per_page
+          schema: { type: integer }
+          description: Items per page for pagination
+      responses:
+        '200':
+          description: OK
+
+  /public/self-order/combos:
+    get:
+      tags: [Self-Order]
+      summary: List combos for self-order
+      description: Public endpoint - no authentication required
+      responses:
+        '200':
+          description: OK
+
+  /public/self-order/order:
+    post:
+      tags: [Self-Order]
+      summary: Create self-order
+      description: Public endpoint - no authentication required
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SelfOrderRequest'
+      responses:
+        '201':
+          description: Order created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/SelfOrder'
+
+  /public/self-order/order/{orderNo}/status:
+    get:
+      tags: [Self-Order]
+      summary: Get order status
+      description: Public endpoint - no authentication required
+      parameters:
+        - in: path
+          name: orderNo
+          required: true
+          schema: { type: string }
+          example: SO241231ABC123
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          order_no: { type: string }
+                          status: { type: string, enum: [pending, confirmed, preparing, ready, completed, cancelled] }
+                          table_no: { type: string }
+                          created_at: { type: string, format: date-time }
+
 components:
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
+      description: Use token from /login endpoint
+
   schemas:
     ApiResponse:
       type: object
@@ -66,6 +769,145 @@ components:
         code: { type: integer }
         data: {}
       required: [success, message, code]
+
+    PaginatedResponse:
+      type: object
+      properties:
+        success: { type: boolean }
+        message: { type: string }
+        code: { type: integer }
+        data:
+          type: object
+          properties:
+            current_page: { type: integer }
+            data: { type: array, items: {} }
+            per_page: { type: integer }
+            total: { type: integer }
+            last_page: { type: integer }
+
+    Category:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        slug: { type: string }
+        description: { type: string, nullable: true }
+        image_url: { type: string, nullable: true }
+        sort_order: { type: integer }
+        is_active: { type: boolean }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    CategoryRequest:
+      type: object
+      properties:
+        name: { type: string, example: "Beverages" }
+        slug: { type: string, example: "beverages" }
+        description: { type: string, nullable: true }
+        image_url: { type: string, nullable: true }
+        sort_order: { type: integer, default: 0 }
+        is_active: { type: boolean, default: true }
+      required: [name]
+
+    MenuItem:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        sku: { type: string }
+        description: { type: string, nullable: true }
+        price: { type: integer }
+        category_id: { type: integer, nullable: true }
+        image_url: { type: string, nullable: true }
+        is_active: { type: boolean }
+        loyalty_points: { type: integer }
+        category:
+          $ref: '#/components/schemas/Category'
+
+    MenuItemRequest:
+      type: object
+      properties:
+        name: { type: string }
+        sku: { type: string }
+        description: { type: string }
+        price: { type: integer }
+        category_id: { type: integer }
+        image_url: { type: string }
+        is_active: { type: boolean }
+        loyalty_points: { type: integer }
+      required: [name, sku, price]
+
+    ComboRequest:
+      type: object
+      properties:
+        name: { type: string }
+        description: { type: string }
+        price: { type: integer }
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              menu_item_id: { type: integer }
+              quantity: { type: integer }
+
+    CustomerRequest:
+      type: object
+      properties:
+        name: { type: string }
+        phone: { type: string }
+        email: { type: string }
+      required: [name]
+
+    KitchenOrder:
+      type: object
+      properties:
+        order_no: { type: string, example: "SO241231ABC123" }
+        table_no: { type: string, example: "A5" }
+        customer_name: { type: string, nullable: true }
+        status: { type: string, enum: [pending, confirmed, preparing, ready, completed, cancelled] }
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              name: { type: string }
+              quantity: { type: integer }
+              notes: { type: string, nullable: true }
+        created_at: { type: string, format: date-time }
+
+    SelfOrderRequest:
+      type: object
+      properties:
+        table_no: { type: string, example: "A5" }
+        customer_name: { type: string, example: "John" }
+        items:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            properties:
+              menu_item_id: { type: integer }
+              quantity: { type: integer, minimum: 1 }
+              notes: { type: string, nullable: true }
+            required: [menu_item_id, quantity]
+      required: [table_no, items]
+
+    SelfOrder:
+      type: object
+      properties:
+        order_no: { type: string }
+        table_no: { type: string }
+        customer_name: { type: string, nullable: true }
+        status: { type: string }
+        subtotal: { type: integer }
+        total: { type: integer }
+        items:
+          type: array
+          items:
+            type: object
+        created_at: { type: string, format: date-time }
+
     CreateSaleRequest:
       type: object
       properties:
@@ -82,6 +924,7 @@ components:
         sold_at: { type: string, format: date-time }
         customer_id: { type: integer, nullable: true }
       required: [items, payment]
+
     SaleItemCreate:
       type: object
       properties:
@@ -89,6 +932,7 @@ components:
         qty: { type: number, minimum: 0.01 }
         price: { type: integer, minimum: 0 }
       required: [product_id, qty, price]
+
     PaymentCreate:
       type: object
       properties:
@@ -96,6 +940,7 @@ components:
         amount: { type: integer, minimum: 0 }
         reference: { type: string, nullable: true }
       required: [method]
+
     CreateSaleResponse:
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
@@ -103,6 +948,7 @@ components:
           properties:
             data:
               $ref: '#/components/schemas/Sale'
+
     Sale:
       type: object
       properties:
@@ -117,84 +963,15 @@ components:
         status: { type: string }
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
-        items:
-          type: array
-          items: { $ref: '#/components/schemas/SaleItem' }
-        payments:
-          type: array
-          items: { $ref: '#/components/schemas/Payment' }
-    SaleItem:
-      type: object
-      properties:
-        id: { type: integer }
-        pos_sale_id: { type: integer }
-        product_id: { type: integer }
-        qty: { type: number }
-        price: { type: integer }
-        line_total: { type: integer }
-        created_at: { type: string, format: date-time }
-        updated_at: { type: string, format: date-time }
-    Payment:
-      type: object
-      properties:
-        id: { type: integer }
-        pos_sale_id: { type: integer }
-        method: { type: string }
-        amount: { type: integer }
-        reference: { type: string, nullable: true }
-        created_at: { type: string, format: date-time }
-        updated_at: { type: string, format: date-time }
+
     PostCogsRequest:
       type: object
       properties:
         items_cost:
-          description: Biaya per item (bisa array objek atau map {product_id: cost}).
-          oneOf:
-            - type: array
-              items:
-                type: object
-                required: [product_id, cost]
-                properties:
-                  product_id: { type: integer }
-                  cost: { type: integer }
-            - type: object
-              additionalProperties: { type: integer }
-      required: [items_cost]
-    JournalEntryResponse:
-      allOf:
-        - $ref: '#/components/schemas/ApiResponse'
-        - type: object
-          properties:
-            data: { $ref: '#/components/schemas/JournalEntry' }
-    JournalEntry:
-      type: object
-      properties:
-        id: { type: integer }
-        date: { type: string, format: date }
-        reference: { type: string }
-        memo: { type: string }
-        source: { type: string }
-        status: { type: string, enum: [Draft, Posted, Voided, Reversed] }
-        posted_at: { type: string, format: date-time, nullable: true }
-        voided_at: { type: string, format: date-time, nullable: true }
-        created_at: { type: string, format: date-time }
-        updated_at: { type: string, format: date-time }
-        lines:
           type: array
-          items: { $ref: '#/components/schemas/JournalLine' }
-    JournalLine:
-      type: object
-      properties:
-        id: { type: integer }
-        journal_entry_id: { type: integer }
-        chart_of_account_id: { type: integer }
-        debit: { type: integer }
-        credit: { type: integer }
-        memo: { type: string }
-        department: { type: string, nullable: true }
-        project: { type: string, nullable: true }
-        external_reference_id: { type: string, nullable: true }
-        is_reconciled: { type: boolean }
-        reconciled_at: { type: string, format: date, nullable: true }
-        created_at: { type: string, format: date-time }
-        updated_at: { type: string, format: date-time }
+          items:
+            type: object
+            properties:
+              product_id: { type: integer }
+              cost: { type: integer }
+      required: [items_cost]
