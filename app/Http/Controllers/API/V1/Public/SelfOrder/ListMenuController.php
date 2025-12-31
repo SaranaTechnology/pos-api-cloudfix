@@ -10,8 +10,15 @@ class ListMenuController extends BaseController
 {
     public function __invoke(Request $request, ListPublicMenuAction $action)
     {
-        $data = $action->execute($request->only(['category', 'search']));
+        $filters = $request->only(['category', 'category_id', 'search', 'per_page']);
 
-        return $this->success($data, 'Menu berhasil diambil');
+        $data = $action->execute($filters);
+
+        // If paginated
+        if (method_exists($data, 'items')) {
+            return $this->resolveForSuccessResponseWithPage('Menu berhasil diambil', $data);
+        }
+
+        return $this->resolveForSuccessResponseWith('Menu berhasil diambil', $data);
     }
 }

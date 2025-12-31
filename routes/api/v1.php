@@ -44,6 +44,17 @@ use App\Http\Controllers\API\V1\POS\Sale\IndexSaleController;
 use App\Http\Controllers\API\V1\POS\Sale\ShowSaleController;
 use App\Http\Controllers\API\V1\POS\Sale\CancelSaleController;
 use App\Http\Controllers\API\V1\POS\Sale\PostCogsController;
+use App\Http\Controllers\API\V1\POS\Category\IndexCategoryController;
+use App\Http\Controllers\API\V1\POS\Category\CreateCategoryController;
+use App\Http\Controllers\API\V1\POS\Category\ShowCategoryController;
+use App\Http\Controllers\API\V1\POS\Category\UpdateCategoryController;
+use App\Http\Controllers\API\V1\POS\Category\DeleteCategoryController;
+use App\Http\Controllers\API\V1\Kitchen\IndexKitchenOrdersController;
+use App\Http\Controllers\API\V1\Kitchen\ConfirmOrderController;
+use App\Http\Controllers\API\V1\Kitchen\PreparingOrderController;
+use App\Http\Controllers\API\V1\Kitchen\ReadyOrderController;
+use App\Http\Controllers\API\V1\Kitchen\CompleteOrderController;
+use App\Http\Controllers\API\V1\Kitchen\CancelOrderController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -145,6 +156,26 @@ Route::prefix('pos')->middleware(['auth:api'])->group(function () {
         Route::get(uri: '{customer}/loyalty', action: ListCustomerTransactionsController::class);
         Route::post(uri: '{customer}/loyalty', action: AdjustCustomerPointsController::class);
     });
+
+    // Categories
+    Route::prefix('categories')->group(function () {
+        Route::get(uri: '', action: IndexCategoryController::class);
+        Route::post(uri: '', action: CreateCategoryController::class);
+        Route::get(uri: '{category}', action: ShowCategoryController::class);
+        Route::put(uri: '{category}', action: UpdateCategoryController::class);
+        Route::patch(uri: '{category}', action: UpdateCategoryController::class);
+        Route::delete(uri: '{category}', action: DeleteCategoryController::class);
+    });
+});
+
+// Kitchen Display System (authenticated)
+Route::prefix('kitchen')->middleware(['auth:api'])->group(function () {
+    Route::get(uri: 'orders', action: IndexKitchenOrdersController::class);
+    Route::post(uri: 'orders/{orderNo}/confirm', action: ConfirmOrderController::class);
+    Route::post(uri: 'orders/{orderNo}/preparing', action: PreparingOrderController::class);
+    Route::post(uri: 'orders/{orderNo}/ready', action: ReadyOrderController::class);
+    Route::post(uri: 'orders/{orderNo}/complete', action: CompleteOrderController::class);
+    Route::post(uri: 'orders/{orderNo}/cancel', action: CancelOrderController::class);
 });
 
 Route::get(uri: 'subriptions', action:IndexSubsriptionController::class)->middleware(['auth:api']);
@@ -152,6 +183,7 @@ Route::any(uri:'callback',action:CallbackController::class)->name('callback');
 
 // Public Self-Order API (tanpa auth)
 Route::prefix('public/self-order')->group(function () {
+    Route::get('categories', \App\Http\Controllers\API\V1\Public\SelfOrder\ListCategoriesController::class);
     Route::get('menu', \App\Http\Controllers\API\V1\Public\SelfOrder\ListMenuController::class);
     Route::get('combos', \App\Http\Controllers\API\V1\Public\SelfOrder\ListCombosController::class);
     Route::post('order', \App\Http\Controllers\API\V1\Public\SelfOrder\CreateOrderController::class);

@@ -9,9 +9,16 @@ class ListPublicMenuAction
     public function execute(array $data = [])
     {
         $query = MenuItem::query()
+            ->with('category:id,name,slug')
             ->where('is_active', true)
             ->orderBy('name');
 
+        // Filter by category_id (new FK relationship)
+        if (!empty($data['category_id'])) {
+            $query->where('category_id', $data['category_id']);
+        }
+
+        // Legacy: Filter by category string field
         if (!empty($data['category'])) {
             $query->where('category', $data['category']);
         }
@@ -20,14 +27,11 @@ class ListPublicMenuAction
             $query->where('name', 'like', '%' . $data['search'] . '%');
         }
 
-        return $query->get([
-            'id',
-            'name',
-            'description',
-            'price',
-            'category',
-            'image_url',
-            'metadata',
-        ]);
+        // Support pagination
+        if (!empty($data['per_page'])) {
+            return $query->paginate($data['per_page']);
+        }
+
+        return $query->get();
     }
 }
