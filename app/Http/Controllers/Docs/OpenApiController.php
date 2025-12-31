@@ -10,13 +10,12 @@ class OpenApiController extends Controller
 {
     public function ui()
     {
-        $specUrl = url('/docs/openapi.yml');
-        $html = <<<HTML
+        $html = <<<'HTML'
 <!DOCTYPE html>
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>API Docs</title>
+    <title>Sarana Cashier POS API</title>
     <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css" />
   </head>
   <body>
@@ -24,13 +23,14 @@ class OpenApiController extends Controller
     <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
     <script>
       window.ui = SwaggerUIBundle({
-        url: '$specUrl',
+        url: '/docs/openapi.yaml',
         dom_id: '#swagger-ui',
         presets: [SwaggerUIBundle.presets.apis],
+        persistAuthorization: true
       })
     </script>
   </body>
- </html>
+</html>
 HTML;
         return new Response($html, 200, ['Content-Type' => 'text/html']);
     }
