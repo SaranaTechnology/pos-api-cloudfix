@@ -55,6 +55,7 @@ use App\Http\Controllers\API\V1\Kitchen\PreparingOrderController;
 use App\Http\Controllers\API\V1\Kitchen\ReadyOrderController;
 use App\Http\Controllers\API\V1\Kitchen\CompleteOrderController;
 use App\Http\Controllers\API\V1\Kitchen\CancelOrderController;
+use App\Http\Controllers\API\V1\Staff\Auth\StaffLoginController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -70,6 +71,7 @@ Route::prefix('health')->group(function () {
 });
 
 Route::post(uri: 'login', action: LoginController::class);
+Route::post(uri: 'staff/login', action: StaffLoginController::class);
 
 Route::middleware(['auth:api'])->group(function () {
     Route::get(uri: 'auth', action: GetDataAuthController::class);

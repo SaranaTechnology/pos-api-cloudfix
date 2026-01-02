@@ -1,16 +1,34 @@
 openapi: 3.0.3
 info:
   title: Sarana Cashier POS API
-  description: Point of Sale & Self-Order System - Laravel Octane + FrankenPHP
-  version: 2.0.0
+  description: |
+    Point of Sale & Self-Order System - Laravel Octane + FrankenPHP
+
+    ## API Versions
+
+    ### V1 - Admin API (Full Access)
+    - Login dengan email/password
+    - Full CRUD untuk Menu, Kategori, Combo, Customer
+    - Manajemen User, Role, Permission
+
+    ### V2 - Staff/Kasir API (Limited Access)
+    - Login dengan NIP/password
+    - Read-only untuk Menu, Kategori, Combo, Customer
+    - Create & View Sales (transaksi penjualan)
+    - Tidak ada akses Create/Update/Delete master data
+  version: 2.1.0
 servers:
   - url: http://localhost:8000/api/v1
-    description: Local development
+    description: Admin API (Full Access)
+  - url: http://localhost:8000/api/v2
+    description: Staff/Kasir API (Limited Access)
 tags:
   - name: Health
     description: Health check endpoints
   - name: Auth
     description: Authentication endpoints
+  - name: Staff Auth
+    description: Staff authentication (login with NIP)
   - name: POS Sales
     description: Point of Sale transactions
   - name: Menu
@@ -74,6 +92,41 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ApiResponse'
+
+  /staff/login:
+    post:
+      tags: [Staff Auth]
+      summary: Login staff (kasir) dengan NIP
+      description: Login untuk kasir menggunakan NIP dan password. Data staff diambil dari HRD service (shared database).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nip: { type: string, example: "EMP001" }
+                password: { type: string, example: "password123" }
+              required: [nip, password]
+      responses:
+        '200':
+          description: Login berhasil
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          token: { type: string }
+                          token_type: { type: string, example: "Bearer" }
+                          staff:
+                            $ref: '#/components/schemas/Staff'
+        '400':
+          description: NIP tidak ditemukan atau password salah
 
   /auth:
     get:
@@ -975,3 +1028,16 @@ components:
               product_id: { type: integer }
               cost: { type: integer }
       required: [items_cost]
+
+    Staff:
+      type: object
+      properties:
+        id: { type: integer }
+        nip: { type: string, example: "EMP001" }
+        nama: { type: string, example: "John Doe" }
+        notelp: { type: string, example: "081234567890" }
+        jabatan: { type: string, example: "Kasir" }
+        division_id: { type: integer }
+        status: { type: string, example: "active" }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }

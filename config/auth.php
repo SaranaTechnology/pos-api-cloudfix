@@ -1,6 +1,7 @@
 <?php
 
 use Infra\User\Models\User;
+use Infra\Staff\Models\Staff;
 
 return [
 
@@ -46,6 +47,10 @@ return [
             'driver' => 'passport',
             'provider' => 'users',
         ],
+        'staff' => [
+            'driver' => 'passport',
+            'provider' => 'staff',
+        ],
     ],
 
     /*
@@ -70,11 +75,10 @@ return [
             'driver' => 'eloquent',
             'model' => User::class,
         ],
-
-        // 'users' => [
-        //     'driver' => 'database',
-        //     'table' => 'users',
-        // ],
+        'staff' => [
+            'driver' => 'eloquent',
+            'model' => Staff::class,
+        ],
     ],
 
     /*
