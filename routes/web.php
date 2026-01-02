@@ -21,4 +21,3 @@ Route::get('/', function () {
 Route::get('/docs', [OpenApiController::class, 'ui']);
 Route::get('/docs/openapi.{extension}', [OpenApiController::class, 'spec'])
     ->where('extension', 'yaml|yml');
-ad
